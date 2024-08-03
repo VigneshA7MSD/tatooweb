@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tattoo Artist Portfolio - Home</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <img src="logo.png" alt="Tattoo Artist Logo" class="logo">
+            <button class="menu-toggle">&#9776;</button>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="portfolio.html">Portfolio</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="testimonials.html">Testimonials</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="banner">
+        <div class="slider">
+            <div class="slides">
+                <img src="images/slider1.jpeg" alt="Tattoo Studio Banner 1">
+                <img src="images/slider2.jpeg" alt="Tattoo Studio Banner 2">
+                <img src="images/slider3.jpeg" alt="Tattoo Studio Banner 3">
+                <!-- Add more images here if needed -->
+            </div>
+            <button class="prev" onclick="moveSlide(-1)">&#10094;</button>
+            <button class="next" onclick="moveSlide(1)">&#10095;</button>
+        </div>
+    </div>
+    <main>
+        <section class="hero">
+            <h1>Welcome to Dhilip Kumar's Tattoo Studio</h1>
+            <p>Creating Art That Lasts a Lifetime</p>
+        </section>
+        <section class="featured-work">
+            <h2>Featured Work</h2>
+            <div class="gallery">
+                <!-- Add images here -->
+                <img src="featured1.jpg" alt="Featured Tattoo 1">
+                <img src="featured2.jpg" alt="Featured Tattoo 2">
+                <img src="featured3.jpg" alt="Featured Tattoo 3">
+            </div>
+            <a href="portfolio.html" class="btn">View Portfolio</a>
+        </section>
+    </main>
+    <footer>
+        <div class="container">
+            <p>Contact: [Email Address] | [Phone Number]</p>
+            <div class="social-media">
+                <a href="#">Facebook</a>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        function toggleMenu() {
+            const navLinks = document.querySelector('.nav-links');
+            navLinks.classList.toggle('show');
+        }
+
+        let slideIndex = 0;
+        const slides = document.querySelectorAll('.slides img');
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            slideIndex = (index + totalSlides) % totalSlides;
+            const offset = -slideIndex * 100;
+            document.querySelector('.slides').style.transform = `translateX(${offset}%)`;
+        }
+
+        function moveSlide(n) {
+            showSlide(slideIndex + n);
+        }
+
+        // Show the first slide initially
+        showSlide(slideIndex);
+
+        // Add event listener to the menu toggle button
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.querySelector('.menu-toggle');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', toggleMenu);
+            }
+        });
+    </script>
+</body>
+</html>
