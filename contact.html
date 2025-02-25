@@ -25,25 +25,40 @@
     <main>
         <section class="contact">
             <h1>Contact Us</h1>
-         <form action="https://api.web3forms.com/submit" method="POST">
+        <template>
+  <form ref="form" @submit.prevent="sendEmail">
+    <label>Name</label>
+    <input type="text" name="user_name">
+    <label>Email</label>
+    <input type="email" name="user_email">
+    <label>Message</label>
+    <textarea name="message"></textarea>
+    <input type="submit" value="Send">
+  </form>
+</template>
 
-    <!-- Replace with your Access Key -->
-    <input type="hidden" name="access_key" value="d0838e92-5c13-422e-bcc3-a22bfd80c6fe">
+<script>
+import emailjs from '@emailjs/browser';
 
-    <!-- Form Inputs. Each input must have a name="" attribute -->
-    <input type="text" name="name" required>
-    <input type="email" name="email" required>
-    <textarea name="message" required></textarea>
-
-    <!-- Honeypot Spam Protection -->
-    <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
-
-    <!-- Custom Confirmation / Success Page -->
-    <!-- <input type="hidden" name="redirect" value="https://mywebsite.com/thanks.html"> -->
-
-    <button type="submit">Submit Form</button>
-
-</form>
+export default {
+  methods: {
+    sendEmail() {
+      emailjs
+        .sendForm('service_105tpth', 'template_019lf78', this.$refs.form, {
+          publicKey: 'lR8khsjtqSkx8owIBviuG',
+        })
+        .then(
+          () => {
+            console.log('SUCCESS!');
+          },
+          (error) => {
+            console.log('FAILED...', error.text);
+          },
+        );
+    },
+  },
+};
+</script>
             <p>Or contact us directly at [Email Address] or [Phone Number].</p>
         </section>
     </main>
