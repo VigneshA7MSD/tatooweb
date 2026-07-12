@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iguana Tattoo — Shed the Old Skin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Stardos+Stencil:wght@400;700&family=Jost:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#0e140e; --ink-soft:#141c14; --scale:#31473a; --fern:#5c7a5e;
+    --gold:#c9a227; --rust:#a85736; --bone:#ece6d6; --bone-dim:#b9b3a0; --line:rgba(236,230,214,0.14);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{max-width:100%;overflow-x:hidden;}
+  body{max-width:100%;}
+  p,h1,h2,h3,div,span,a{overflow-wrap:break-word;word-break:break-word;}
+  input,textarea{max-width:100%;}
+  /* flex/grid children default to a min content-width that can push wider than
+     the viewport on small screens — force them to allow shrinking */
+  .hero-grid > *, .about-grid > *, .visit-grid > *, .artist-grid > *, nav > *,
+  .list-item > *, .list-fields, .admin-header > *, .tabs, .foot-row > *,
+  .field-row > *, .steps > *, .navlinks{ min-width:0; }
+  html{scroll-behavior:smooth;}
+  body{background:var(--ink);color:var(--bone);font-family:'Jost',sans-serif;font-weight:300;overflow-x:hidden;position:relative;}
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.05;
+    background-image:linear-gradient(30deg, var(--bone) 12%, transparent 12.5%, transparent 87%, var(--bone) 87.5%, var(--bone)),
+      linear-gradient(150deg, var(--bone) 12%, transparent 12.5%, transparent 87%, var(--bone) 87.5%, var(--bone)),
+      linear-gradient(30deg, var(--bone) 12%, transparent 12.5%, transparent 87%, var(--bone) 87.5%, var(--bone)),
+      linear-gradient(150deg, var(--bone) 12%, transparent 12.5%, transparent 87%, var(--bone) 87.5%, var(--bone));
+    background-size:44px 76px;background-position:0 0, 0 0, 22px 38px, 22px 38px;mix-blend-mode:overlay;
+  }
+  h1,h2,h3,.stencil{font-family:'Stardos Stencil',cursive;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;color:var(--bone);}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);}
+  a{color:inherit;text-decoration:none;}
+  img,svg{display:block;max-width:100%;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+  @media(max-width:480px){ .wrap{padding:0 20px;} }
+  section{position:relative;z-index:2;}
+  a:focus-visible, button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important;}}
+
+  header{position:fixed;top:0;left:0;right:0;z-index:50;background:linear-gradient(to bottom, rgba(14,20,14,0.92), rgba(14,20,14,0));padding:22px 0 40px;}
+  nav{display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:0 32px;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Stardos Stencil',cursive;font-size:1.15rem;letter-spacing:0.04em;}
+  .brand svg{width:30px;height:30px;flex-shrink:0;}
+  .navlinks{display:none;gap:34px;font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;}
+  @media(min-width:820px){.navlinks{display:flex;}}
+  .navlinks a{opacity:0.82;transition:opacity 0.2s, color 0.2s;}
+  .navlinks a:hover{opacity:1;color:var(--gold);}
+  .navcta{border:1px solid var(--gold);color:var(--gold);padding:9px 18px;font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;transition:background 0.2s, color 0.2s;}
+  .navcta:hover{background:var(--gold);color:var(--ink);}
+
+  .hero{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding-top:120px;padding-bottom:60px;position:relative;background-size:cover;background-position:center;transition:background-image 0.4s ease;}
+  .hero.has-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg, rgba(14,20,14,0.55), rgba(14,20,14,0.88));z-index:0;}
+  .hero.has-banner .hero-grid, .hero.has-banner .scroll-cue{position:relative;z-index:1;}
+  .hero.has-banner .hero-art{display:none;}
+  .hero-grid{display:grid;grid-template-columns:1fr;align-items:center;gap:20px;}
+  @media(min-width:900px){.hero-grid{grid-template-columns:1.1fr 0.9fr;gap:10px;}}
+  .hero-copy .eyebrow{margin-bottom:18px;display:block;}
+  .hero h1{font-size:clamp(3.2rem, 10vw, 7.2rem);line-height:0.86;color:var(--bone);}
+  .hero h1 span{display:block;}
+  .hero h1 .accent{color:var(--gold);}
+  .hero-sub{max-width:420px;margin-top:26px;font-size:1.05rem;line-height:1.6;color:var(--bone-dim);font-style:italic;}
+  .hero-ctas{display:flex;gap:16px;margin-top:38px;flex-wrap:wrap;}
+  .btn{font-family:'Space Mono',monospace;font-size:0.76rem;letter-spacing:0.14em;text-transform:uppercase;padding:15px 26px;border:1px solid var(--bone);transition:all 0.25s ease;}
+  .btn-solid{background:var(--gold);border-color:var(--gold);color:var(--ink);}
+  .btn-solid:hover{background:transparent;color:var(--gold);}
+  .btn-line:hover{background:var(--bone);color:var(--ink);}
+  .hero-art{position:relative;display:flex;justify-content:center;align-items:center;min-height:340px;}
+  .hero-art svg{width:100%;max-width:460px;}
+  .iguana-path{fill:none;stroke:var(--bone);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2600;stroke-dashoffset:2600;animation:draw 3.4s ease forwards 0.4s;}
+  .iguana-scute{fill:var(--gold);opacity:0;animation:pop 0.4s ease forwards;}
+  .iguana-eye{fill:var(--rust);opacity:0;animation:pop 0.3s ease forwards 2.6s;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  @keyframes pop{to{opacity:1;}}
+  .scroll-cue{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-family:'Space Mono',monospace;font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--bone-dim);display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .scroll-cue::after{content:"";width:1px;height:34px;background:var(--bone-dim);animation:slide 1.8s ease-in-out infinite;}
+  @keyframes slide{0%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}50.01%{transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity 0.8s ease, transform 0.8s ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+  .sec-head{margin-bottom:56px;max-width:640px;}
+  .sec-head .eyebrow{margin-bottom:14px;}
+  .sec-head h2{font-size:clamp(2rem,4.4vw,3rem);line-height:1;}
+  .sec-head p{margin-top:18px;color:var(--bone-dim);font-size:1rem;line-height:1.65;}
+
+  .about{padding:130px 0 100px;border-top:1px solid var(--line);}
+  .about-grid{display:grid;grid-template-columns:1fr;gap:44px;}
+  @media(min-width:840px){.about-grid{grid-template-columns:0.9fr 1.1fr;}}
+  .about-lead{font-size:clamp(1.5rem,2.6vw,2.1rem);line-height:1.3;font-weight:400;color:var(--bone);}
+  .about-lead em{color:var(--gold);font-style:normal;}
+  .about-body p{color:var(--bone-dim);line-height:1.75;margin-bottom:18px;font-size:0.98rem;}
+  .about-body p:last-child{margin-bottom:0;}
+
+  .process{padding:100px 0;border-top:1px solid var(--line);}
+  .steps{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--line);}
+  @media(min-width:840px){.steps{grid-template-columns:repeat(4,1fr);}}
+  .step{padding:34px 26px 34px 0;border-bottom:1px solid var(--line);position:relative;}
+  @media(min-width:840px){.step{border-right:1px solid var(--line);border-bottom:none;padding:0 26px 0 0;}.step:last-child{border-right:none;}}
+  .step-num{font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--rust);margin-bottom:22px;}
+  .step h3{font-size:1.3rem;margin-bottom:12px;}
+  .step p{color:var(--bone-dim);font-size:0.92rem;line-height:1.6;}
+
+  .artists{padding:100px 0;border-top:1px solid var(--line);}
+  .artist-grid{display:grid;grid-template-columns:1fr;gap:2px;background:var(--line);}
+  @media(min-width:700px){.artist-grid{grid-template-columns:repeat(2,1fr);}}
+  .artist{background:var(--ink);padding:38px 34px;display:flex;flex-direction:column;gap:16px;transition:background 0.3s ease;}
+  .artist:hover{background:var(--ink-soft);}
+  .artist-mark{width:56px;height:56px;border:1px solid var(--fern);display:flex;align-items:center;justify-content:center;font-family:'Stardos Stencil',cursive;font-size:1.2rem;color:var(--gold);overflow:hidden;flex-shrink:0;}
+  .artist h3{font-size:1.5rem;}
+  .artist .role{font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fern);}
+  .artist p{color:var(--bone-dim);font-size:0.92rem;line-height:1.6;}
+
+  .flash{padding:100px 0;border-top:1px solid var(--line);}
+  .flash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:var(--line);}
+  @media(min-width:700px){.flash-grid{grid-template-columns:repeat(3,1fr);}}
+  .flash-card{background:var(--ink);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:20px;overflow:hidden;}
+  .flash-card svg{width:56%;stroke:var(--bone);fill:none;stroke-width:1.4;transition:stroke 0.3s ease;}
+  .flash-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease;}
+  .flash-card:hover img{transform:scale(1.06);}
+  .flash-card:hover svg{stroke:var(--gold);}
+  .flash-tag{position:absolute;bottom:14px;left:14px;font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--bone);display:flex;gap:8px;z-index:2;background:rgba(14,20,14,0.55);padding:4px 8px;}
+  .flash-tag .price{color:var(--rust);}
+
+  .visit{padding:100px 0 60px;border-top:1px solid var(--line);}
+  .visit-grid{display:grid;grid-template-columns:1fr;gap:50px;}
+  @media(min-width:900px){.visit-grid{grid-template-columns:1fr 1fr;}}
+  .info-block{margin-bottom:30px;}
+  .info-block:last-child{margin-bottom:0;}
+  .info-block .eyebrow{margin-bottom:10px;}
+  .info-block div{color:var(--bone-dim);line-height:1.7;font-size:0.98rem;}
+  form{display:flex;flex-direction:column;gap:18px;}
+  .field{display:flex;flex-direction:column;gap:8px;}
+  .field label{font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--bone-dim);}
+  .field input,.field textarea{background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--bone);font-family:'Jost',sans-serif;font-size:1rem;padding:10px 2px;transition:border-color 0.2s;}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--gold);}
+  .field textarea{resize:vertical;min-height:80px;}
+  form .btn{align-self:flex-start;margin-top:8px;background:transparent;border-color:var(--gold);color:var(--gold);cursor:pointer;}
+  form .btn:hover{background:var(--gold);color:var(--ink);}
+
+  footer{padding:50px 0 40px;border-top:1px solid var(--line);}
+  .foot-row{display:flex;flex-direction:column;gap:24px;justify-content:space-between;align-items:flex-start;}
+  @media(min-width:700px){.foot-row{flex-direction:row;align-items:center;}}
+  .foot-brand{font-family:'Stardos Stencil',cursive;font-size:1rem;letter-spacing:0.04em;}
+  .foot-links{display:flex;gap:24px;font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--bone-dim);}
+  .foot-links a:hover{color:var(--gold);}
+  .foot-fine{font-family:'Space Mono',monospace;font-size:0.66rem;color:var(--bone-dim);opacity:0.6;margin-top:24px;}
+
+  /* ---------- PAGE LOADER ---------- */
+  #page-loader{
+    position:fixed;inset:0;z-index:1000;background:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity 0.5s ease, visibility 0.5s ease;
+  }
+  #page-loader.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  .loader-svg{width:84px;height:84px;animation:loader-spin 1.6s linear infinite;}
+  .loader-track{fill:none;stroke:var(--line);stroke-width:2.5;}
+  .loader-scutes{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-dasharray:14 11;transform-origin:50px 50px;}
+  .loader-eye{fill:var(--rust);transform-origin:50px 50px;}
+  @keyframes loader-spin{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion: reduce){.loader-svg{animation:none;}}
+
+  /* ---------- ADMIN FAB + MODAL ---------- */
+  #admin-fab{
+    position:fixed;bottom:18px;right:18px;z-index:200;
+    width:34px;height:34px;border-radius:50%;
+    background:var(--ink-soft);border:1px solid var(--line);color:var(--bone-dim);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:all 0.2s ease;opacity:0.55;
+  }
+  #admin-fab:hover{opacity:1;border-color:var(--gold);color:var(--gold);}
+  #admin-fab svg{width:15px;height:15px;}
+
+  #admin-overlay{
+    display:none;position:fixed;inset:0;z-index:300;
+    background:rgba(8,11,8,0.92);backdrop-filter:blur(2px);
+    overflow-y:auto;
+  }
+  #admin-overlay.open{display:block;}
+  #admin-close{
+    position:fixed;top:18px;right:22px;z-index:310;
+    background:transparent;border:none;color:var(--bone-dim);
+    font-family:'Space Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;
+    cursor:pointer;display:flex;align-items:center;gap:8px;
+  }
+  #admin-close:hover{color:var(--gold);}
+
+  #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .login-box{width:100%;max-width:360px;text-align:center;}
+  .login-box h2{font-size:2rem;margin-bottom:6px;}
+  .login-box .eyebrow{display:block;margin-bottom:28px;}
+  .login-box input{width:100%;background:var(--ink-soft);border:1px solid var(--line);color:var(--bone);padding:14px 16px;font-size:1rem;margin-bottom:14px;font-family:'Jost',sans-serif;}
+  .login-box input:focus{outline:none;border-color:var(--gold);}
+  .login-box button{width:100%;background:var(--gold);border:1px solid var(--gold);color:var(--ink);padding:14px;font-family:'Space Mono',monospace;font-size:0.75rem;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;}
+  #login-error{color:var(--rust);font-size:0.85rem;margin-top:12px;display:none;}
+
+  #dashboard{display:none;}
+  .admin-header{position:sticky;top:0;z-index:10;background:rgba(8,11,8,0.97);border-bottom:1px solid var(--line);padding:60px 28px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+  .admin-header h2{font-size:1.3rem;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .tab-btn{background:transparent;border:1px solid var(--line);color:var(--bone-dim);padding:10px 18px;font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.2s;cursor:pointer;}
+  .tab-btn.active{background:var(--gold);border-color:var(--gold);color:var(--ink);}
+  .tab-btn:hover:not(.active){border-color:var(--gold);color:var(--gold);}
+  .logout{background:transparent;border:none;color:var(--bone-dim);font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;text-decoration:underline;cursor:pointer;}
+  .logout:hover{color:var(--rust);}
+
+  #dashboard main{max-width:900px;margin:0 auto;padding:40px 28px 100px;}
+  .admin-panel{display:none;}
+  .admin-panel.active{display:block;}
+  .admin-panel h2{font-size:1.6rem;margin-bottom:6px;}
+  .admin-panel > p.hint{color:var(--bone-dim);font-size:0.9rem;margin-bottom:32px;}
+
+  .card{background:var(--ink-soft);border:1px solid var(--line);padding:26px;margin-bottom:20px;}
+  @media(max-width:480px){
+    .card{padding:16px;}
+    .admin-header{padding:56px 16px 16px;}
+    #dashboard main{padding:24px 16px 80px;}
+  }
+  .a-field{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+  .a-field label{font-family:'Space Mono',monospace;font-size:0.66rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--bone-dim);}
+  .a-field input[type=text],.a-field textarea{background:var(--ink);border:1px solid var(--line);color:var(--bone);padding:11px 12px;font-size:0.95rem;font-family:'Jost',sans-serif;}
+  .a-field input[type=text]:focus,.a-field textarea:focus{outline:none;border-color:var(--gold);}
+  .a-field textarea{resize:vertical;min-height:70px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:560px){.field-row{grid-template-columns:1fr;}}
+
+  .abtn{font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;padding:12px 22px;border:1px solid var(--gold);background:transparent;color:var(--gold);transition:all 0.2s;cursor:pointer;}
+  .abtn:hover{background:var(--gold);color:var(--ink);}
+  .abtn-danger{border-color:var(--rust);color:var(--rust);}
+  .abtn-danger:hover{background:var(--rust);color:var(--bone);}
+  .abtn-sm{padding:8px 14px;font-size:0.66rem;}
+
+  .preview-img{width:100%;max-height:220px;object-fit:cover;border:1px solid var(--line);margin-bottom:14px;display:none;}
+  .file-input{margin-bottom:14px;}
+  .file-input input[type=file]{width:100%;background:var(--ink);border:1px dashed var(--line);color:var(--bone-dim);padding:14px;font-size:0.85rem;font-family:'Jost',sans-serif;}
+
+  .list-item{display:flex;gap:16px;align-items:flex-start;padding:18px 0;border-top:1px solid var(--line);flex-wrap:wrap;}
+  .list-item:first-child{border-top:none;}
+  .list-thumb{width:64px;height:64px;flex-shrink:0;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Stardos Stencil',cursive;color:var(--gold);background:var(--ink);overflow:hidden;}
+  .list-thumb img{width:100%;height:100%;object-fit:cover;}
+  .list-fields{flex:1 1 200px;display:flex;flex-direction:column;gap:10px;}
+  .list-actions{display:flex;gap:8px;flex-shrink:0;}
+  @media(max-width:480px){
+    .list-item{flex-wrap:wrap;}
+    .list-thumb{width:44px;height:44px;}
+    .list-actions{width:100%;justify-content:flex-end;margin-top:6px;}
+  }
+  .a-status{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--fern);margin-top:10px;min-height:1em;}
+  .a-status.err{color:var(--rust);}
+  .empty-note{color:var(--bone-dim);font-size:0.9rem;font-style:italic;padding:20px 0;}
+</style>
+</head>
+<body>
+
+<div id="page-loader" aria-hidden="true">
+  <svg viewBox="0 0 100 100" class="loader-svg">
+    <circle class="loader-track" cx="50" cy="50" r="40"/>
+    <circle class="loader-scutes" cx="50" cy="50" r="40"/>
+    <circle class="loader-eye" cx="50" cy="18" r="3"/>
+  </svg>
+</div>
+
+<header>
+  <nav>
+    <a class="brand" href="#top" aria-label="Iguana Tattoo home">
+      <svg id="brand-logo-default" viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24c2-6 6-10 10-11 1-3 4-5 7-4-1 2-1 3 0 4 4 0 8 3 9 8-3-1-5 0-6 2 3 1 5 3 5 6-3-2-6-2-8 0-3-2-7-2-9 0-2-3-6-3-8-1 0-2 0-3 0-4z" fill="none" stroke="#c9a227" stroke-width="1.4"/></svg>
+      <img id="brand-logo-img" alt="" style="display:none;width:30px;height:30px;object-fit:contain;">
+      IGUANA TATTOO
+    </a>
+    <div class="navlinks">
+      <a href="#about">Studio</a>
+      <a href="#process">Process</a>
+      <a href="#artists">Artists</a>
+      <a href="#flash">Flash</a>
+      <a href="#visit">Visit</a>
+    </div>
+    <a class="navcta" href="#visit">Book</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <section class="hero wrap" id="hero">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Est. in the basking hours</span>
+        <h1 id="hero-headline"><span>IGUANA</span><span class="accent">TATTOO</span></h1>
+        <p class="hero-sub" id="hero-tagline">Cold-blooded precision, warm-blooded art. Every piece is drawn slow and struck fast — like the animal we're named for.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-solid" href="#visit">Book a Consult</a>
+          <a class="btn btn-line" href="#flash">View Flash</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 400 320" fill="none">
+          <path class="iguana-path" d="M40 230 C 60 200, 70 170, 100 160 C 90 140, 100 110, 130 100 C 135 80, 155 65, 175 70 C 170 85, 175 95, 190 98 C 220 100, 250 115, 260 145 C 275 140, 290 145, 295 160 C 280 162, 272 172, 275 185 C 295 188, 310 200, 312 218 C 296 210, 282 212, 275 222 C 285 232, 288 248, 278 260 C 272 248, 260 244, 250 250 C 238 232, 216 224, 195 230 C 175 236, 160 250, 158 268 C 148 258, 148 244, 156 234 C 130 240, 108 236, 92 222 C 78 232, 60 234, 40 230 Z"/>
+          <path class="iguana-path" d="M175 70 C 178 82, 190 90, 195 100 M195 100 C 210 100, 225 108, 235 118 M235 118 C 248 116, 258 124, 260 138 M260 138 C 270 136, 278 142, 280 152" stroke-width="1.2"/>
+          <polygon class="iguana-scute" points="176,68 181,76 171,76" style="animation-delay:1.5s"/>
+          <polygon class="iguana-scute" points="193,78 199,88 187,88" style="animation-delay:1.65s"/>
+          <polygon class="iguana-scute" points="212,92 219,103 205,103" style="animation-delay:1.8s"/>
+          <polygon class="iguana-scute" points="234,105 242,117 226,117" style="animation-delay:1.95s"/>
+          <polygon class="iguana-scute" points="255,124 263,137 247,137" style="animation-delay:2.1s"/>
+          <circle class="iguana-eye" cx="140" cy="103" r="3.4"/>
+        </svg>
+      </div>
+    </div>
+    <div class="scroll-cue">Scroll</div>
+  </section>
+
+  <section class="about wrap" id="about">
+    <div class="about-grid reveal">
+      <p class="about-lead">We work the way an iguana does — <em>still for a long time, then exact.</em></p>
+      <div class="about-body">
+        <p>Iguana Tattoo opened as a two-chair studio for people who wanted their tattoo considered before it was inked — a design worth wearing for the next forty years, not the next four months.</p>
+        <p>Every consult starts with a sketch and a conversation, not a form. We work in fine line, blackwork, traditional color, and photo-real portraiture, and we'll tell you honestly which one suits what you're asking for.</p>
+        <p>The studio is small on purpose. Fewer chairs, more attention, one artist per piece from first pencil to final wipe-down.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="process wrap" id="process">
+    <div class="sec-head reveal">
+      <span class="eyebrow">How a session runs</span>
+      <h2>Four sittings,<br>one piece.</h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step"><div class="step-num">01</div><h3>Consult</h3><p>Twenty minutes with your artist. Bring references, skin, and an honest sense of scale and placement.</p></div>
+      <div class="step"><div class="step-num">02</div><h3>Design</h3><p>A custom stencil is drawn to your body, not lifted from a printer. You approve it before ink touches skin.</p></div>
+      <div class="step"><div class="step-num">03</div><h3>Ink</h3><p>Sessions run 2–5 hours depending on size. Breaks are built in — we're not racing the outline.</p></div>
+      <div class="step"><div class="step-num">04</div><h3>Heal</h3><p>Aftercare instructions, a wrap that actually works, and a check-in message at the two-week mark.</p></div>
+    </div>
+  </section>
+
+  <section class="artists wrap" id="artists">
+    <div class="sec-head reveal">
+      <span class="eyebrow">The chairs</span>
+      <h2>Meet the artists.</h2>
+    </div>
+    <div class="artist-grid reveal" id="artist-grid"></div>
+  </section>
+
+  <section class="flash wrap" id="flash">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Walk-in flash sheet</span>
+      <h2>Ready to ink,<br>no consult needed.</h2>
+      <p>First come, first inked. Prices include touch-up within 30 days.</p>
+    </div>
+    <div class="flash-grid reveal" id="flash-grid"></div>
+  </section>
+
+  <section class="visit wrap" id="visit">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Come by or write ahead</span>
+      <h2>Visit the studio.</h2>
+    </div>
+    <div class="visit-grid reveal">
+      <div>
+        <div class="info-block"><span class="eyebrow">Address</span><div id="visit-address">214 Terrace Row<br>Unit 3, Riverside District</div></div>
+        <div class="info-block"><span class="eyebrow">Hours</span><div id="visit-hours">Tue – Sat, 11am – 8pm<br>Closed Sun &amp; Mon</div></div>
+        <div class="info-block"><span class="eyebrow">Contact</span><div id="visit-contact">studio@iguanatattoo.example<br>(555) 019-2244</div></div>
+      </div>
+      <form id="contact-form">
+        <div class="field"><label for="name">Name</label><input id="name" type="text" placeholder="Your name" required></div>
+        <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="you@example.com" required></div>
+        <div class="field"><label for="idea">Tell us the idea</label><textarea id="idea" placeholder="Placement, size, style, references..."></textarea></div>
+        <button class="btn" type="submit">Send Request</button>
+        <div class="a-status" id="contact-status"></div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <div class="foot-row">
+    <span class="foot-brand">IGUANA TATTOO</span>
+    <div class="foot-links">
+      <a href="#about">Studio</a>
+      <a href="#artists">Artists</a>
+      <a href="#flash">Flash</a>
+      <a href="#visit">Visit</a>
+    </div>
+  </div>
+  <div class="foot-fine">© 2026 Iguana Tattoo. All designs custom or licensed for single use. Must be 18+ or accompanied by consenting guardian.</div>
+</footer>
+
+<!-- ADMIN ACCESS -->
+<button id="admin-fab" aria-label="Studio admin login" title="Studio admin">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+</button>
+
+<div id="admin-overlay">
+  <button id="admin-close">✕ Close</button>
+
+  <div id="login-screen">
+    <div class="login-box">
+      <h2>Iguana Admin</h2>
+      <span class="eyebrow">Studio control panel</span>
+      <input type="password" id="pw-input" placeholder="Admin password" autocomplete="current-password">
+      <button id="pw-submit">Enter</button>
+      <div id="login-error">Wrong password. Try again.</div>
+    </div>
+  </div>
+
+  <div id="dashboard">
+    <div class="admin-header">
+      <h2>Iguana Admin</h2>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="site">Site</button>
+        <button class="tab-btn" data-tab="artists">Artists</button>
+        <button class="tab-btn" data-tab="work">Work Images</button>
+        <button class="tab-btn" data-tab="messages">Messages</button>
+      </div>
+      <button class="logout" id="logout-btn">Log out</button>
+    </div>
+
+    <main>
+      <section class="admin-panel active" id="panel-site">
+        <h2>Banner &amp; Headline</h2>
+        <p class="hint">Controls the homepage hero — the banner photo replaces the illustrated iguana when one is set.</p>
+        <div class="card">
+          <div class="a-field">
+            <label>Current banner</label>
+            <img id="banner-preview" class="preview-img">
+            <div class="file-input"><input type="file" id="banner-file" accept="image/*"></div>
+            <button class="abtn abtn-sm" id="banner-clear-btn" type="button">Remove banner (use illustration instead)</button>
+          </div>
+          <div class="a-field"><label for="headline">Headline</label><input type="text" id="headline" placeholder="IGUANA TATTOO"></div>
+          <div class="a-field"><label for="tagline">Tagline</label><textarea id="tagline" placeholder="Shed the old skin. Wear the new one."></textarea></div>
+        </div>
+
+        <h2 style="margin-top:36px;">Logo</h2>
+        <p class="hint">Replaces the line-art icon next to "IGUANA TATTOO" in the top nav.</p>
+        <div class="card">
+          <div class="a-field">
+            <label>Current logo</label>
+            <img id="logo-preview" class="preview-img" style="max-height:100px;object-fit:contain;background:var(--ink);">
+            <div class="file-input"><input type="file" id="logo-file" accept="image/*"></div>
+            <button class="abtn abtn-sm" id="logo-clear-btn" type="button">Remove logo (use default icon instead)</button>
+          </div>
+        </div>
+
+        <h2 style="margin-top:36px;">Store Info</h2>
+        <p class="hint">Address, hours, and contact details shown in "Visit the studio."</p>
+        <div class="card">
+          <div class="a-field"><label for="venue-name">Venue name</label><input type="text" id="venue-name" placeholder="Iguana Tattoo"></div>
+          <div class="a-field"><label for="store-address">Address</label><textarea id="store-address" placeholder="214 Terrace Row, Unit 3, Riverside District"></textarea></div>
+          <div class="a-field"><label for="store-hours">Hours</label><textarea id="store-hours" placeholder="Tue – Sat, 11am – 8pm, Closed Sun & Mon"></textarea></div>
+          <div class="field-row">
+            <div class="a-field"><label for="store-phone">Phone</label><input type="text" id="store-phone" placeholder="(555) 019-2244"></div>
+            <div class="a-field"><label for="store-email">Contact email</label><input type="text" id="store-email" placeholder="studio@iguanatattoo.example"></div>
+          </div>
+        </div>
+
+        <button class="abtn" id="save-site-btn">Save Site Settings</button>
+        <div class="a-status" id="site-status"></div>
+      </section>
+
+      <section class="admin-panel" id="panel-artists">
+        <h2>Artists</h2>
+        <p class="hint">Names, roles, bios, and profile photos shown in the "Meet the artists" section.</p>
+        <div class="card" id="artists-list"><div class="empty-note">Loading…</div></div>
+        <h2 style="margin-top:36px;">Add Artist</h2>
+        <div class="card">
+          <div class="field-row">
+            <div class="a-field"><label for="new-initials">Initials</label><input type="text" id="new-initials" maxlength="3" placeholder="MR"></div>
+            <div class="a-field"><label for="new-name">Name</label><input type="text" id="new-name" placeholder="Mara Reyes"></div>
+          </div>
+          <div class="a-field"><label for="new-role">Role / specialty</label><input type="text" id="new-role" placeholder="Fine line & botanical"></div>
+          <div class="a-field"><label for="new-bio">Bio</label><textarea id="new-bio" placeholder="Short bio..."></textarea></div>
+          <div class="a-field"><label>Profile photo (optional — shows initials if left blank)</label><div class="file-input"><input type="file" id="new-artist-photo" accept="image/*"></div></div>
+          <button class="abtn" id="add-artist-btn">Add Artist</button>
+          <div class="a-status" id="add-artist-status"></div>
+        </div>
+      </section>
+
+      <section class="admin-panel" id="panel-work">
+        <h2>Work / Flash Images</h2>
+        <p class="hint">Photos shown in the walk-in flash sheet gallery.</p>
+        <div class="card" id="work-list"><div class="empty-note">Loading…</div></div>
+        <h2 style="margin-top:36px;">Add Image</h2>
+        <div class="card">
+          <div class="a-field"><label>Image file</label><div class="file-input"><input type="file" id="new-work-file" accept="image/*"></div></div>
+          <div class="field-row">
+            <div class="a-field"><label for="new-caption">Caption</label><input type="text" id="new-caption" placeholder="Coiled snake, fine line"></div>
+            <div class="a-field"><label for="new-price">Price</label><input type="text" id="new-price" placeholder="$120"></div>
+          </div>
+          <button class="abtn" id="add-work-btn">Upload &amp; Add</button>
+          <div class="a-status" id="add-work-status"></div>
+        </div>
+      </section>
+
+      <section class="admin-panel" id="panel-messages">
+        <h2>Messages</h2>
+        <p class="hint">Inquiries submitted through the "Visit the studio" contact form.</p>
+        <div class="card" id="messages-list"><div class="empty-note">Loading…</div></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://zzfpxtyugkxovvvvbvwu.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_XmhkOL_nBnvkXy1JbAjtDQ_Taw-sxki';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  function esc(str){
+    const d = document.createElement('div');
+    d.textContent = str ?? '';
+    return d.innerHTML;
+  }
+
+  const FALLBACK_ARTISTS = `
+    <div class="artist"><div class="artist-mark">MR</div><h3>Mara Reyes</h3><span class="role">Fine line &amp; botanical</span><p>Single-needle work built from real plant specimens.</p></div>
+    <div class="artist"><div class="artist-mark">DK</div><h3>Dez Kohl</h3><span class="role">Blackwork &amp; ornamental</span><p>Heavy saturation, geometric structure, and a steady hand for pattern work.</p></div>
+    <div class="artist"><div class="artist-mark">JT</div><h3>Jonah Tran</h3><span class="role">American traditional</span><p>Bold line, limited palette, no shortcuts.</p></div>
+    <div class="artist"><div class="artist-mark">AO</div><h3>Ama Osei</h3><span class="role">Color realism</span><p>Portraits and wildlife rendered in full color.</p></div>
+  `;
+  const FALLBACK_FLASH = `
+    <div class="flash-card"><svg viewBox="0 0 100 100"><path d="M20 70 Q30 40 50 40 Q70 40 80 70 M50 40 L50 20 M42 26 L50 18 L58 26" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="flash-tag">No.014 <span class="price">$120</span></div></div>
+    <div class="flash-card"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="26"/><path d="M50 14 L50 24 M50 76 L50 86 M14 50 L24 50 M76 50 L86 50 M25 25 L32 32 M75 25 L68 32 M25 75 L32 68 M75 75 L68 68" stroke-linecap="round"/></svg><div class="flash-tag">No.015 <span class="price">$90</span></div></div>
+    <div class="flash-card"><svg viewBox="0 0 100 100"><path d="M30 80 C20 60 25 30 45 20 C40 35 45 45 55 48 C70 52 78 40 75 25 C88 40 85 65 68 75 C55 83 40 84 30 80 Z" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="flash-tag">No.016 <span class="price">$150</span></div></div>
+    <div class="flash-card"><svg viewBox="0 0 100 100"><path d="M20 50 L45 25 L45 40 L80 40 L80 60 L45 60 L45 75 Z" stroke-linejoin="round"/></svg><div class="flash-tag">No.017 <span class="price">$80</span></div></div>
+    <div class="flash-card"><svg viewBox="0 0 100 100"><path d="M50 15 C60 15 65 25 60 32 C70 35 75 45 68 52 C76 58 75 70 65 74 C68 82 60 88 50 84 C45 90 33 90 30 82 C20 84 14 74 20 66 C12 62 12 50 22 46 C18 38 24 28 34 30 C36 20 46 14 50 15 Z"/></svg><div class="flash-tag">No.018 <span class="price">$100</span></div></div>
+    <div class="flash-card"><svg viewBox="0 0 100 100"><path d="M25 75 L50 25 L75 75 Z" stroke-linejoin="round"/><path d="M38 55 L62 55" stroke-linecap="round"/><path d="M32 65 L68 65" stroke-linecap="round"/></svg><div class="flash-tag">No.019 <span class="price">$70</span></div></div>
+  `;
+  document.getElementById('artist-grid').innerHTML = FALLBACK_ARTISTS;
+  document.getElementById('flash-grid').innerHTML = FALLBACK_FLASH;
+
+  async function loadSiteSettings(){
+    try{
+      const { data, error } = await sb.from('site_settings').select('*').eq('id', 1).single();
+      if(error || !data) return;
+      const hero = document.getElementById('hero');
+      if(data.banner_url){
+        hero.classList.add('has-banner');
+        hero.style.backgroundImage = `url("${data.banner_url}")`;
+      }
+      if(data.headline){
+        const parts = data.headline.trim().split(/\s+/);
+        const first = parts.slice(0, Math.ceil(parts.length/2)).join(' ');
+        const second = parts.slice(Math.ceil(parts.length/2)).join(' ');
+        document.getElementById('hero-headline').innerHTML =
+          `<span>${esc(first)}</span><span class="accent">${esc(second)}</span>`;
+      }
+      if(data.tagline){
+        document.getElementById('hero-tagline').textContent = data.tagline;
+      }
+      if(data.logo_url){
+        document.getElementById('brand-logo-default').style.display = 'none';
+        const img = document.getElementById('brand-logo-img');
+        img.src = data.logo_url;
+        img.style.display = 'block';
+      }
+      if(data.address) document.getElementById('visit-address').innerHTML = esc(data.address).replace(/\n/g,'<br>');
+      if(data.hours) document.getElementById('visit-hours').innerHTML = esc(data.hours).replace(/\n/g,'<br>');
+      if(data.contact_email || data.phone){
+        document.getElementById('visit-contact').innerHTML =
+          [data.contact_email, data.phone].filter(Boolean).map(esc).join('<br>');
+      }
+    }catch(e){ console.warn('site_settings load failed', e); }
+  }
+
+  async function loadArtists(){
+    try{
+      const { data, error } = await sb.from('artists').select('*').order('sort_order', { ascending: true });
+      if(error || !data || data.length === 0) return;
+      const grid = document.getElementById('artist-grid');
+      grid.innerHTML = data.map(a => `
+        <div class="artist">
+          <div class="artist-mark">${a.photo_url ? `<img src="${esc(a.photo_url)}" alt="${esc(a.name)}" style="width:100%;height:100%;object-fit:cover;">` : esc(a.initials)}</div>
+          <h3>${esc(a.name)}</h3>
+          <span class="role">${esc(a.role)}</span>
+          <p>${esc(a.bio)}</p>
+        </div>
+      `).join('');
+    }catch(e){ console.warn('artists load failed', e); }
+  }
+
+  async function loadWork(){
+    try{
+      const { data, error } = await sb.from('work_images').select('*').order('sort_order', { ascending: true });
+      if(error || !data || data.length === 0) return;
+      const grid = document.getElementById('flash-grid');
+      grid.innerHTML = data.map((w, i) => `
+        <div class="flash-card">
+          <img src="${esc(w.image_url)}" alt="${esc(w.caption || 'Flash piece')}" loading="lazy">
+          <div class="flash-tag">No.${String(i+1).padStart(3,'0')} ${w.price ? `<span class="price">${esc(w.price)}</span>` : ''}</div>
+        </div>
+      `).join('');
+    }catch(e){ console.warn('work_images load failed', e); }
+  }
+
+  const loaderStart = Date.now();
+  Promise.allSettled([loadSiteSettings(), loadArtists(), loadWork()]).then(() => {
+    const elapsed = Date.now() - loaderStart;
+    const remaining = Math.max(0, 500 - elapsed);
+    setTimeout(() => {
+      const loader = document.getElementById('page-loader');
+      if(loader) loader.classList.add('hidden');
+    }, remaining);
+  });
+  // safety net: never let the loader hang forever if something above fails silently
+  setTimeout(() => {
+    const loader = document.getElementById('page-loader');
+    if(loader) loader.classList.add('hidden');
+  }, 6000);
+
+  document.getElementById('contact-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const statusEl = document.getElementById('contact-status');
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const idea = document.getElementById('idea').value.trim();
+    if(!name || !email){ statusEl.textContent = 'Name and email are required.'; statusEl.className = 'a-status err'; return; }
+    statusEl.textContent = 'Sending…'; statusEl.className = 'a-status';
+    const { error } = await sb.from('messages').insert({ name, email, idea });
+    if(error){
+      statusEl.textContent = 'Something went wrong — try again.'; statusEl.className = 'a-status err';
+      console.warn(error);
+    } else {
+      statusEl.textContent = 'Thanks — we\'ll get back to you soon.'; statusEl.className = 'a-status';
+      document.getElementById('contact-form').reset();
+    }
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){ entry.target.classList.add('in'); observer.unobserve(entry.target); }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  /* =========================================================
+     ADMIN PANEL (in-page modal, opened via the small corner button)
+     ========================================================= */
+  const ADMIN_PASSWORD = 'Dhilip@7msd';
+  const BUCKET = 'iguana-media';
+
+  const adminOverlay = document.getElementById('admin-overlay');
+  const loginScreen = document.getElementById('login-screen');
+  const dashboard = document.getElementById('dashboard');
+
+  document.getElementById('admin-fab').addEventListener('click', () => {
+    adminOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if(sessionStorage.getItem('iguana_admin_ok') === '1') showDashboard();
+  });
+  document.getElementById('admin-close').addEventListener('click', closeAdmin);
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && adminOverlay.classList.contains('open')) closeAdmin();
+  });
+  function closeAdmin(){
+    adminOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function tryLogin(){
+    const val = document.getElementById('pw-input').value;
+    if(val === ADMIN_PASSWORD){
+      sessionStorage.setItem('iguana_admin_ok', '1');
+      document.getElementById('login-error').style.display = 'none';
+      showDashboard();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  }
+  document.getElementById('pw-submit').addEventListener('click', tryLogin);
+  document.getElementById('pw-input').addEventListener('keydown', e => { if(e.key === 'Enter') tryLogin(); });
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    sessionStorage.removeItem('iguana_admin_ok');
+    dashboard.style.display = 'none';
+    loginScreen.style.display = 'flex';
+    document.getElementById('pw-input').value = '';
+  });
+
+  function showDashboard(){
+    loginScreen.style.display = 'none';
+    dashboard.style.display = 'block';
+    loadSiteSettingsAdmin();
+    loadArtistsAdmin();
+    loadWorkAdmin();
+    loadMessagesAdmin();
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  function setStatus(el, msg, isErr){
+    el.textContent = msg;
+    el.className = 'a-status' + (isErr ? ' err' : '');
+    if(msg) setTimeout(() => { if(el.textContent === msg) el.textContent=''; }, 4000);
+  }
+
+  async function uploadFile(file, folder){
+    const path = `${folder}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_')}`;
+    const { error } = await sb.storage.from(BUCKET).upload(path, file, { upsert: true });
+    if(error) throw error;
+    const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  // ---- Site settings (admin) ----
+  async function loadSiteSettingsAdmin(){
+    const { data, error } = await sb.from('site_settings').select('*').eq('id', 1).single();
+    if(error || !data) return;
+    document.getElementById('headline').value = data.headline || '';
+    document.getElementById('tagline').value = data.tagline || '';
+    document.getElementById('venue-name').value = data.venue_name || '';
+    document.getElementById('store-address').value = data.address || '';
+    document.getElementById('store-hours').value = data.hours || '';
+    document.getElementById('store-phone').value = data.phone || '';
+    document.getElementById('store-email').value = data.contact_email || '';
+    const preview = document.getElementById('banner-preview');
+    if(data.banner_url){ preview.src = data.banner_url; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; }
+    const logoPreview = document.getElementById('logo-preview');
+    if(data.logo_url){ logoPreview.src = data.logo_url; logoPreview.style.display = 'block'; }
+    else { logoPreview.style.display = 'none'; }
+  }
+
+  let pendingBannerUrl = undefined;
+  let pendingLogoUrl = undefined;
+
+  document.getElementById('banner-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const statusEl = document.getElementById('site-status');
+    setStatus(statusEl, 'Uploading banner…');
+    try{
+      const url = await uploadFile(file, 'banner');
+      pendingBannerUrl = url;
+      const preview = document.getElementById('banner-preview');
+      preview.src = url;
+      preview.style.display = 'block';
+      setStatus(statusEl, 'Banner uploaded — click Save to apply.');
+    }catch(err){ setStatus(statusEl, 'Upload failed: ' + err.message, true); }
+  });
+
+  document.getElementById('banner-clear-btn').addEventListener('click', () => {
+    pendingBannerUrl = null;
+    document.getElementById('banner-preview').style.display = 'none';
+    document.getElementById('banner-preview').src = '';
+  });
+
+  document.getElementById('logo-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const statusEl = document.getElementById('site-status');
+    setStatus(statusEl, 'Uploading logo…');
+    try{
+      const url = await uploadFile(file, 'logo');
+      pendingLogoUrl = url;
+      const preview = document.getElementById('logo-preview');
+      preview.src = url;
+      preview.style.display = 'block';
+      setStatus(statusEl, 'Logo uploaded — click Save to apply.');
+    }catch(err){ setStatus(statusEl, 'Upload failed: ' + err.message, true); }
+  });
+
+  document.getElementById('logo-clear-btn').addEventListener('click', () => {
+    pendingLogoUrl = null;
+    document.getElementById('logo-preview').style.display = 'none';
+    document.getElementById('logo-preview').src = '';
+  });
+
+  document.getElementById('save-site-btn').addEventListener('click', async () => {
+    const statusEl = document.getElementById('site-status');
+    const payload = {
+      id: 1,
+      headline: document.getElementById('headline').value.trim(),
+      tagline: document.getElementById('tagline').value.trim(),
+      venue_name: document.getElementById('venue-name').value.trim(),
+      address: document.getElementById('store-address').value.trim(),
+      hours: document.getElementById('store-hours').value.trim(),
+      phone: document.getElementById('store-phone').value.trim(),
+      contact_email: document.getElementById('store-email').value.trim(),
+      updated_at: new Date().toISOString()
+    };
+    if(pendingBannerUrl !== undefined) payload.banner_url = pendingBannerUrl;
+    if(pendingLogoUrl !== undefined) payload.logo_url = pendingLogoUrl;
+    setStatus(statusEl, 'Saving…');
+    const { error } = await sb.from('site_settings').upsert(payload);
+    if(error) setStatus(statusEl, 'Save failed: ' + error.message, true);
+    else {
+      setStatus(statusEl, 'Saved.');
+      pendingBannerUrl = undefined;
+      pendingLogoUrl = undefined;
+      loadSiteSettings();
+    }
+  });
+
+  // ---- Artists (admin) ----
+  async function loadArtistsAdmin(){
+    const list = document.getElementById('artists-list');
+    const { data, error } = await sb.from('artists').select('*').order('sort_order', { ascending: true });
+    if(error){ list.innerHTML = `<div class="empty-note">Failed to load: ${esc(error.message)}</div>`; return; }
+    if(!data || data.length === 0){ list.innerHTML = `<div class="empty-note">No artists yet — add one below.</div>`; return; }
+    list.innerHTML = '';
+    data.forEach(a => {
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      let pendingPhotoUrl = undefined;
+      row.innerHTML = `
+        <div class="list-thumb">${a.photo_url ? `<img src="${esc(a.photo_url)}" alt="">` : esc(a.initials)}</div>
+        <div class="list-fields">
+          <div class="field-row">
+            <input type="text" class="a-initials" value="${esc(a.initials)}" placeholder="Initials">
+            <input type="text" class="a-name" value="${esc(a.name)}" placeholder="Name">
+          </div>
+          <input type="text" class="a-role" value="${esc(a.role)}" placeholder="Role">
+          <textarea class="a-bio" placeholder="Bio">${esc(a.bio)}</textarea>
+          <div class="file-input"><input type="file" class="a-photo" accept="image/*"></div>
+          <div class="a-status"></div>
+        </div>
+        <div class="list-actions">
+          <button class="abtn abtn-sm row-save">Save</button>
+          <button class="abtn abtn-sm abtn-danger row-delete">Delete</button>
+        </div>
+      `;
+      const statusEl = row.querySelector('.a-status');
+      const thumb = row.querySelector('.list-thumb');
+      row.querySelector('.a-photo').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        setStatus(statusEl, 'Uploading photo…');
+        try{
+          pendingPhotoUrl = await uploadFile(file, 'artists');
+          thumb.innerHTML = `<img src="${pendingPhotoUrl}" alt="">`;
+          setStatus(statusEl, 'Photo uploaded — click Save to apply.');
+        }catch(err){ setStatus(statusEl, 'Upload failed: ' + err.message, true); }
+      });
+      row.querySelector('.row-save').addEventListener('click', async () => {
+        setStatus(statusEl, 'Saving…');
+        const updatePayload = {
+          initials: row.querySelector('.a-initials').value.trim(),
+          name: row.querySelector('.a-name').value.trim(),
+          role: row.querySelector('.a-role').value.trim(),
+          bio: row.querySelector('.a-bio').value.trim()
+        };
+        if(pendingPhotoUrl !== undefined) updatePayload.photo_url = pendingPhotoUrl;
+        const { error } = await sb.from('artists').update(updatePayload).eq('id', a.id);
+        if(error) setStatus(statusEl, 'Failed: ' + error.message, true);
+        else {
+          setStatus(statusEl, 'Saved.');
+          if(pendingPhotoUrl === undefined){ thumb.textContent = row.querySelector('.a-initials').value.trim(); }
+          loadArtists();
+        }
+      });
+      row.querySelector('.row-delete').addEventListener('click', async () => {
+        if(!confirm(`Delete ${a.name}?`)) return;
+        const { error } = await sb.from('artists').delete().eq('id', a.id);
+        if(error){ setStatus(statusEl, 'Failed: ' + error.message, true); return; }
+        row.remove();
+        loadArtists();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  document.getElementById('add-artist-btn').addEventListener('click', async () => {
+    const statusEl = document.getElementById('add-artist-status');
+    const initials = document.getElementById('new-initials').value.trim();
+    const name = document.getElementById('new-name').value.trim();
+    const role = document.getElementById('new-role').value.trim();
+    const bio = document.getElementById('new-bio').value.trim();
+    const photoFile = document.getElementById('new-artist-photo').files[0];
+    if(!name || !initials){ setStatus(statusEl, 'Name and initials are required.', true); return; }
+    setStatus(statusEl, photoFile ? 'Uploading photo…' : 'Adding…');
+    try{
+      let photo_url = null;
+      if(photoFile) photo_url = await uploadFile(photoFile, 'artists');
+      const { error } = await sb.from('artists').insert({ initials, name, role, bio, photo_url, sort_order: Date.now() });
+      if(error) throw error;
+      document.getElementById('new-initials').value = '';
+      document.getElementById('new-name').value = '';
+      document.getElementById('new-role').value = '';
+      document.getElementById('new-bio').value = '';
+      document.getElementById('new-artist-photo').value = '';
+      setStatus(statusEl, 'Artist added.');
+      loadArtistsAdmin();
+      loadArtists();
+    }catch(err){
+      setStatus(statusEl, 'Failed: ' + err.message, true);
+    }
+  });
+
+  // ---- Work images (admin) ----
+  async function loadWorkAdmin(){
+    const list = document.getElementById('work-list');
+    const { data, error } = await sb.from('work_images').select('*').order('sort_order', { ascending: true });
+    if(error){ list.innerHTML = `<div class="empty-note">Failed to load: ${esc(error.message)}</div>`; return; }
+    if(!data || data.length === 0){ list.innerHTML = `<div class="empty-note">No images yet — add one below.</div>`; return; }
+    list.innerHTML = '';
+    data.forEach(w => {
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      row.innerHTML = `
+        <div class="list-thumb"><img src="${esc(w.image_url)}" alt=""></div>
+        <div class="list-fields">
+          <div class="field-row">
+            <input type="text" class="w-caption" value="${esc(w.caption || '')}" placeholder="Caption">
+            <input type="text" class="w-price" value="${esc(w.price || '')}" placeholder="Price">
+          </div>
+          <div class="a-status"></div>
+        </div>
+        <div class="list-actions">
+          <button class="abtn abtn-sm row-save">Save</button>
+          <button class="abtn abtn-sm abtn-danger row-delete">Delete</button>
+        </div>
+      `;
+      const statusEl = row.querySelector('.a-status');
+      row.querySelector('.row-save').addEventListener('click', async () => {
+        setStatus(statusEl, 'Saving…');
+        const { error } = await sb.from('work_images').update({
+          caption: row.querySelector('.w-caption').value.trim(),
+          price: row.querySelector('.w-price').value.trim()
+        }).eq('id', w.id);
+        if(error) setStatus(statusEl, 'Failed: ' + error.message, true);
+        else { setStatus(statusEl, 'Saved.'); loadWork(); }
+      });
+      row.querySelector('.row-delete').addEventListener('click', async () => {
+        if(!confirm('Delete this image?')) return;
+        const { error } = await sb.from('work_images').delete().eq('id', w.id);
+        if(error){ setStatus(statusEl, 'Failed: ' + error.message, true); return; }
+        row.remove();
+        loadWork();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  document.getElementById('add-work-btn').addEventListener('click', async () => {
+    const statusEl = document.getElementById('add-work-status');
+    const fileInput = document.getElementById('new-work-file');
+    const file = fileInput.files[0];
+    const caption = document.getElementById('new-caption').value.trim();
+    const price = document.getElementById('new-price').value.trim();
+    if(!file){ setStatus(statusEl, 'Choose an image file first.', true); return; }
+    setStatus(statusEl, 'Uploading…');
+    try{
+      const url = await uploadFile(file, 'work');
+      const { error } = await sb.from('work_images').insert({ image_url: url, caption, price, sort_order: Date.now() });
+      if(error) throw error;
+      fileInput.value = '';
+      document.getElementById('new-caption').value = '';
+      document.getElementById('new-price').value = '';
+      setStatus(statusEl, 'Image added.');
+      loadWorkAdmin();
+      loadWork();
+    }catch(err){ setStatus(statusEl, 'Failed: ' + err.message, true); }
+  });
+
+  // ---- Messages (admin) ----
+  async function loadMessagesAdmin(){
+    const list = document.getElementById('messages-list');
+    const { data, error } = await sb.from('messages').select('*').order('created_at', { ascending: false });
+    if(error){ list.innerHTML = `<div class="empty-note">Failed to load: ${esc(error.message)}</div>`; return; }
+    if(!data || data.length === 0){ list.innerHTML = `<div class="empty-note">No messages yet.</div>`; return; }
+    list.innerHTML = '';
+    data.forEach(m => {
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      const when = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+      row.innerHTML = `
+        <div class="list-thumb" style="font-family:'Space Mono',monospace;font-size:0.6rem;text-align:center;color:var(--bone-dim);">${esc((m.name||'?').slice(0,2).toUpperCase())}</div>
+        <div class="list-fields">
+          <div style="font-size:1rem;color:var(--bone);">${esc(m.name)} ${m.resolved ? '<span style="color:var(--fern);font-family:\'Space Mono\',monospace;font-size:0.65rem;">· HANDLED</span>' : ''}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--bone-dim);">${esc(m.email)} · ${esc(when)}</div>
+          <div style="font-size:0.92rem;color:var(--bone-dim);line-height:1.5;">${esc(m.idea || '(no message)')}</div>
+          <div class="a-status"></div>
+        </div>
+        <div class="list-actions">
+          <button class="abtn abtn-sm row-toggle">${m.resolved ? 'Mark new' : 'Mark handled'}</button>
+          <button class="abtn abtn-sm abtn-danger row-delete">Delete</button>
+        </div>
+      `;
+      const statusEl = row.querySelector('.a-status');
+      row.querySelector('.row-toggle').addEventListener('click', async () => {
+        setStatus(statusEl, 'Saving…');
+        const { error } = await sb.from('messages').update({ resolved: !m.resolved }).eq('id', m.id);
+        if(error) setStatus(statusEl, 'Failed: ' + error.message, true);
+        else loadMessagesAdmin();
+      });
+      row.querySelector('.row-delete').addEventListener('click', async () => {
+        if(!confirm(`Delete message from ${m.name}?`)) return;
+        const { error } = await sb.from('messages').delete().eq('id', m.id);
+        if(error){ setStatus(statusEl, 'Failed: ' + error.message, true); return; }
+        row.remove();
+      });
+      list.appendChild(row);
+    });
+  }
+</script>
+
+</body>
+</html>
