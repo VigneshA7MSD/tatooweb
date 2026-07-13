@@ -57,6 +57,20 @@
   .navcta{border:1px solid var(--gold);color:var(--gold);padding:9px 18px;font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;transition:background 0.2s, color 0.2s;}
   .navcta:hover{background:var(--gold);color:var(--ink);}
 
+  .header-counter{
+    display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
+    margin:12px auto 0;max-width:1180px;padding:0 32px;
+  }
+  .header-counter .counter-pill{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 12px;border:1px solid rgba(236,230,214,0.14);
+    background:rgba(14,20,14,0.7);backdrop-filter:blur(6px);
+    color:var(--bone-dim);font-family:'Space Mono',monospace;font-size:0.64rem;
+    letter-spacing:0.14em;text-transform:uppercase;
+  }
+  .header-counter .counter-pill strong{color:var(--gold);font-size:0.8rem;letter-spacing:0.04em;}
+  @media(max-width:640px){.header-counter{padding:0 20px;justify-content:flex-start;}.header-counter .counter-pill{width:100%;justify-content:center;}}
+
   .hero{min-height:100svh;display:flex;flex-direction:column;padding-top:120px;padding-bottom:40px;position:relative;overflow:hidden;}
   .hero-slides{position:absolute;inset:0;z-index:0;}
   .hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.4s ease;}
@@ -194,7 +208,8 @@
   .foot-brand{font-family:'Stardos Stencil',cursive;font-size:1rem;letter-spacing:0.04em;}
   .foot-links{display:flex;gap:24px;font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--bone-dim);}
   .foot-links a:hover{color:var(--gold);}
-  .foot-fine{font-family:'Space Mono',monospace;font-size:0.66rem;color:var(--bone-dim);opacity:0.6;margin-top:24px;}
+  .foot-fine{font-family:'Space Mono',monospace;font-size:0.66rem;color:var(--bone-dim);opacity:0.6;margin-top:24px;text-align:center;}
+  .foot-fine p{margin:0;}
 
   /* ---------- STATS ---------- */
   .stats{padding:70px 0;border-top:1px solid var(--line);}
@@ -366,7 +381,6 @@
     <a class="navcta" href="#visit">Book</a>
   </nav>
 </header>
-
 <main id="top">
 
   <section class="hero wrap" id="hero">
@@ -495,7 +509,16 @@
       </div>
       <div class="foot-social" id="foot-social"></div>
     </div>
-    <div class="foot-fine">© 2026 Iguana Tattoo. All designs custom or licensed for single use. Must be 18+ or accompanied by consenting guardian.</div>
+    <div class="foot-fine">
+      <p class="text-sm text-gray-400">
+        © 2026 Iguana Tattoo. All Rights Reserved.
+        <span class="mx-2 text-gray-600">|</span>
+        Designed &amp; Developed by
+        <a href="https://www.linkedin.com/in/vignesh-a-3992b5220/" target="_blank" rel="noopener noreferrer" class="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors duration-300">
+          Vignesh A ↗
+        </a>
+      </p>
+    </div>
   </div>
 </footer>
 
@@ -857,6 +880,7 @@
   }
 
   const loaderStart = Date.now();
+  cleanupUnusedStorageFiles();
   Promise.allSettled([loadSiteSettings(), loadArtists(), loadWork(), loadBannerSlides()]).then(() => {
     const elapsed = Date.now() - loaderStart;
     const remaining = Math.max(0, 500 - elapsed);
@@ -972,6 +996,75 @@
     return data.publicUrl;
   }
 
+  function getStoragePathFromUrl(url){
+    if(!url) return null;
+    try{
+      const pathname = decodeURIComponent(new URL(url).pathname);
+      const prefix = `/storage/v1/object/public/${BUCKET}/`;
+      if(pathname.includes(prefix)) return pathname.slice(prefix.length);
+    }catch(_){ }
+    return null;
+  }
+
+  async function deleteStorageFile(url){
+    if(!url) return;
+    const path = getStoragePathFromUrl(url);
+    if(!path) return;
+    const { error } = await sb.storage.from(BUCKET).remove([path]);
+    if(error && !error.message?.includes('not found')) throw error;
+  }
+
+  async function cleanupUnusedStorageFiles(){
+    try{
+      const [siteSettingsRes, bannerRes, artistsRes, workRes] = await Promise.all([
+        sb.from('site_settings').select('logo_url').eq('id', 1).single(),
+        sb.from('banner_slides').select('image_url'),
+        sb.from('artists').select('photo_url'),
+        sb.from('work_images').select('image_url')
+      ]);
+
+      const usedUrls = new Set();
+      const pushUrls = (rows, key) => {
+        (rows || []).forEach(row => {
+          if(row?.[key]) usedUrls.add(row[key]);
+        });
+      };
+
+      if(!siteSettingsRes.error && siteSettingsRes.data) pushUrls([siteSettingsRes.data], 'logo_url');
+      if(!bannerRes.error) pushUrls(bannerRes.data, 'image_url');
+      if(!artistsRes.error) pushUrls(artistsRes.data, 'photo_url');
+      if(!workRes.error) pushUrls(workRes.data, 'image_url');
+
+      const referencedPaths = new Set();
+      usedUrls.forEach(url => {
+        const path = getStoragePathFromUrl(url);
+        if(path) referencedPaths.add(path);
+      });
+
+      const folders = ['logo', 'banner', 'artists', 'work'];
+      const pathsToRemove = [];
+
+      for(const folder of folders){
+        const { data: files, error: listError } = await sb.storage.from(BUCKET).list(folder, { limit: 1000, sortBy: { column: 'name', order: 'asc' } });
+        if(listError) continue;
+
+        (files || [])
+          .map(file => file.name)
+          .filter(name => !name.startsWith('.'))
+          .forEach(name => {
+            const fullPath = `${folder}/${name}`;
+            if(!referencedPaths.has(fullPath)) pathsToRemove.push(fullPath);
+          });
+      }
+
+      if(pathsToRemove.length){
+        await sb.storage.from(BUCKET).remove(pathsToRemove);
+      }
+    }catch(err){
+      console.warn('storage cleanup failed', err);
+    }
+  }
+
   // ---- Site settings (admin) ----
   async function loadSiteSettingsAdmin(){
     const { data, error } = await sb.from('site_settings').select('*').eq('id', 1).single();
@@ -1018,8 +1111,14 @@
       const statusEl = row.querySelector('.a-status');
       row.querySelector('.row-delete').addEventListener('click', async () => {
         if(!confirm('Delete this banner slide?')) return;
+        setStatus(statusEl, 'Deleting…');
         const { error } = await sb.from('banner_slides').delete().eq('id', s.id);
         if(error){ setStatus(statusEl, 'Failed: ' + error.message, true); return; }
+        try{
+          await deleteStorageFile(s.image_url);
+        }catch(storageError){
+          setStatus(statusEl, 'Database row removed, but bucket cleanup failed: ' + storageError.message, true);
+        }
         row.remove();
         loadBannerSlides();
       });
@@ -1158,8 +1257,14 @@
       });
       row.querySelector('.row-delete').addEventListener('click', async () => {
         if(!confirm(`Delete ${a.name}?`)) return;
+        setStatus(statusEl, 'Deleting…');
         const { error } = await sb.from('artists').delete().eq('id', a.id);
         if(error){ setStatus(statusEl, 'Failed: ' + error.message, true); return; }
+        try{
+          await deleteStorageFile(a.photo_url);
+        }catch(storageError){
+          setStatus(statusEl, 'Database row removed, but bucket cleanup failed: ' + storageError.message, true);
+        }
         row.remove();
         loadArtists();
       });
@@ -1232,8 +1337,14 @@
       });
       row.querySelector('.row-delete').addEventListener('click', async () => {
         if(!confirm('Delete this image?')) return;
+        setStatus(statusEl, 'Deleting…');
         const { error } = await sb.from('work_images').delete().eq('id', w.id);
         if(error){ setStatus(statusEl, 'Failed: ' + error.message, true); return; }
+        try{
+          await deleteStorageFile(w.image_url);
+        }catch(storageError){
+          setStatus(statusEl, 'Database row removed, but bucket cleanup failed: ' + storageError.message, true);
+        }
         row.remove();
         loadWork();
       });
