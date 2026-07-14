@@ -40,14 +40,14 @@
   .eyebrow{font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);}
   a{color:inherit;text-decoration:none;}
   img,svg{display:block;max-width:100%;}
-  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
-  @media(max-width:480px){ .wrap{padding:0 20px;} }
+   .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(24px, 4vw, 56px);}
+  @media(max-width:480px){ .wrap{padding:0 clamp(18px, 5vw, 24px);} }
   section{position:relative;z-index:2;}
   a:focus-visible, button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
   @media (prefers-reduced-motion: reduce){*{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important;}}
 
   header{position:fixed;top:0;left:0;right:0;z-index:50;background:linear-gradient(to bottom, rgba(14,20,14,0.92), rgba(14,20,14,0));padding:22px 0 40px;}
-  nav{display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:0 32px;}
+  nav{display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:0 clamp(24px, 4vw, 56px);}
   .brand{display:flex;align-items:center;gap:10px;font-family:'Stardos Stencil',cursive;font-size:1.15rem;letter-spacing:0.04em;}
   .brand svg{width:30px;height:30px;flex-shrink:0;}
   .navlinks{display:none;gap:34px;font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;}
@@ -59,7 +59,7 @@
 
   .header-counter{
     display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
-    margin:12px auto 0;max-width:1180px;padding:0 32px;
+    margin:12px auto 0;max-width:1180px;padding:0 clamp(24px, 4vw, 56px);
   }
   .header-counter .counter-pill{
     display:flex;align-items:center;gap:8px;
@@ -69,7 +69,7 @@
     letter-spacing:0.14em;text-transform:uppercase;
   }
   .header-counter .counter-pill strong{color:var(--gold);font-size:0.8rem;letter-spacing:0.04em;}
-  @media(max-width:640px){.header-counter{padding:0 20px;justify-content:flex-start;}.header-counter .counter-pill{width:100%;justify-content:center;}}
+  @media(max-width:640px){.header-counter{padding:0 clamp(18px, 5vw, 24px);justify-content:flex-start;}.header-counter .counter-pill{width:100%;justify-content:center;}}
 
   .hero{min-height:100svh;display:flex;flex-direction:column;padding-top:120px;padding-bottom:40px;position:relative;overflow:hidden;}
   .hero-slides{position:absolute;inset:0;z-index:0;}
